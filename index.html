@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Underperformance Signal Workflow</title>
+    <style>
+        :root {
+            --brand-green: #007B34;
+            --dark-green: #00491F;
+            --bright-green: #22D081;
+            --medium-green: #00A749;
+            --light-green: #BFE9D1;
+            --cream: #FFFBED;
+            --light-cream: #F1EADE;
+            --charcoal: #373938;
+            --red: #EE3932;
+            --light-red: #FAC3C1;
+            --yellow: #FFC600;
+            --light-yellow: #FFEEB2;
+            --white: #FFFFFF;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--cream);
+            color: var(--charcoal);
+            line-height: 1.6;
+        }
+
+        header {
+            background: var(--dark-green);
+            color: white;
+            padding: 48px 40px;
+            text-align: center;
+        }
+        header h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.5px; }
+        header p { margin-top: 8px; opacity: 0.8; font-size: 0.95rem; }
+
+        .container { max-width: 980px; margin: 0 auto; padding: 48px 24px; }
+
+        .section { margin-bottom: 56px; }
+
+        .section-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--medium-green);
+            margin-bottom: 6px;
+        }
+
+        h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--dark-green);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light-green);
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+
+        /* Detection windows */
+        .windows-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .window-card {
+            background: white;
+            border-radius: 10px;
+            padding: 28px;
+            border-top: 4px solid var(--brand-green);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+
+        .window-card .window-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .window-card .date {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--brand-green);
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+
+        .window-card p { font-size: 0.875rem; color: #555; }
+
+        /* Tier table */
+        .tier-table { width: 100%; border-collapse: collapse; }
+
+        .tier-table th {
+            background: var(--dark-green);
+            color: white;
+            padding: 11px 16px;
+            text-align: left;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .tier-table th:first-child { border-radius: 8px 0 0 0; }
+        .tier-table th:last-child { border-radius: 0 8px 0 0; }
+
+        .tier-table td {
+            padding: 11px 16px;
+            font-size: 0.875rem;
+            border-bottom: 1px solid var(--light-cream);
+            vertical-align: middle;
+        }
+
+        .tier-table tr:last-child td { border-bottom: none; }
+        .tier-table tr:nth-child(even) td { background: var(--cream); }
+
+        .tier-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .t1 { background: var(--light-yellow); color: #7a5c00; }
+        .t2t3 { background: var(--light-green); color: var(--dark-green); }
+        .t4 { background: var(--light-red); color: #8b1a17; }
+
+        em { font-size: 0.82rem; color: #888; font-style: italic; }
+
+        /* Flow */
+        .flow { display: flex; flex-direction: column; }
+
+        .flow-step {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .flow-left {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 52px;
+            flex-shrink: 0;
+        }
+
+        .step-dot {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            z-index: 1;
+        }
+
+        .step-connector {
+            width: 2px;
+            flex: 1;
+            min-height: 20px;
+            background: linear-gradient(to bottom, var(--light-green), var(--light-green));
+            margin: 0;
+        }
+
+        .auto .step-dot { background: var(--light-green); color: var(--dark-green); font-size: 1.3rem; }
+        .em .step-dot { background: var(--brand-green); color: white; }
+        .reminder .step-dot { background: var(--light-yellow); color: #7a5c00; }
+        .outcome .step-dot { background: var(--charcoal); color: white; font-size: 1rem; }
+
+        .step-body {
+            background: white;
+            border-radius: 10px;
+            padding: 20px 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            flex: 1;
+            margin-bottom: 16px;
+        }
+
+        .step-body h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--dark-green);
+            margin-bottom: 6px;
+        }
+
+        .step-body p { font-size: 0.875rem; color: #555; }
+        .step-body p + p { margin-top: 6px; }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.73rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .tag-auto { background: var(--light-green); color: var(--dark-green); }
+        .tag-task { background: var(--light-yellow); color: #7a5c00; }
+
+        .task-subject {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--charcoal);
+            background: var(--cream);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            font-style: italic;
+        }
+
+        .cp-steps {
+            background: var(--light-green);
+            border-left: 4px solid var(--brand-green);
+            border-radius: 0 8px 8px 0;
+            padding: 14px 18px;
+            margin-top: 12px;
+        }
+
+        .cp-steps p {
+            font-size: 0.855rem;
+            color: var(--dark-green);
+            font-weight: 500;
+        }
+
+        .cp-steps ol {
+            margin: 6px 0 0 18px;
+            font-size: 0.855rem;
+            color: var(--dark-green);
+        }
+
+        .cp-steps li { margin-bottom: 3px; }
+
+        /* Branch */
+        .branch {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 12px;
+        }
+
+        .branch-card {
+            border-radius: 8px;
+            padding: 16px 18px;
+        }
+
+        .branch-resolved {
+            background: #f0faf4;
+            border: 1.5px solid var(--bright-green);
+        }
+
+        .branch-not-resolved {
+            background: #fff5f5;
+            border: 1.5px solid var(--red);
+        }
+
+        .branch-card h4 {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+        }
+
+        .branch-resolved h4 { color: var(--dark-green); }
+        .branch-not-resolved h4 { color: var(--red); }
+        .branch-card p { font-size: 0.83rem; color: #555; }
+
+        /* Objects */
+        .objects-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .object-card {
+            background: white;
+            border-radius: 10px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+
+        .object-card.parent { border-top: 4px solid var(--charcoal); }
+        .object-card.child { border-top: 4px solid var(--brand-green); }
+
+        .object-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--dark-green);
+            margin-bottom: 2px;
+        }
+
+        .object-subtitle {
+            font-size: 0.78rem;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        .field-list { list-style: none; padding: 0; }
+
+        .field-list li {
+            font-size: 0.82rem;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--light-cream);
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .field-list li:last-child { border-bottom: none; }
+
+        .field-name { font-weight: 600; color: var(--charcoal); }
+
+        .field-note {
+            font-size: 0.75rem;
+            color: #888;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .field-note.em { color: var(--brand-green); font-weight: 600; }
+        .field-note.sync { color: #1a6db5; font-weight: 600; }
+
+        /* Sync */
+        .sync-grid {
+            display: grid;
+            grid-template-columns: 1fr 64px 1fr;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .sync-box {
+            background: white;
+            border-radius: 10px;
+            padding: 22px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+
+        .sync-box h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--dark-green);
+            margin-bottom: 4px;
+        }
+
+        .sync-box .sync-sub {
+            font-size: 0.78rem;
+            color: #999;
+            margin-bottom: 12px;
+        }
+
+        .sync-box ul { list-style: none; padding: 0; }
+
+        .sync-box li {
+            font-size: 0.84rem;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--light-cream);
+            color: #555;
+        }
+
+        .sync-box li:last-child { border-bottom: none; }
+
+        .sync-arrow-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            color: var(--brand-green);
+        }
+
+        .arrow-icon { font-size: 1.8rem; line-height: 1; }
+        .arrow-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 1px; color: #aaa; text-transform: uppercase; text-align: center; }
+
+        .task-body-text {
+            font-size: 0.82rem;
+            color: #555;
+            line-height: 1.7;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--light-cream);
+        }
+
+        .task-link-btn {
+            display: inline-block;
+            background: var(--brand-green);
+            color: white;
+            padding: 7px 16px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .task-link-btn:hover { background: var(--dark-green); }
+
+        footer {
+            background: var(--dark-green);
+            color: rgba(255,255,255,0.65);
+            text-align: center;
+            padding: 28px;
+            font-size: 0.8rem;
+            margin-top: 24px;
+        }
+        footer strong { color: white; }
+
+        @media (max-width: 640px) {
+            .windows-grid, .objects-grid, .branch, .sync-grid { grid-template-columns: 1fr; }
+            .sync-arrow-col { transform: none; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Underperformance Signal Workflow</h1>
+    <p>Salesforce · TaskRay · Client Pulse — Technical Overview</p>
+</header>
+
+<div class="container">
+
+    <!-- TRIGGER LOGIC -->
+    <div class="section">
+        <div class="section-label">Trigger</div>
+        <h2>Detection Windows &amp; Tier Conditions</h2>
+
+        <div class="windows-grid">
+            <div class="window-card">
+                <div class="window-label">Window 1</div>
+                <div class="date">May 1</div>
+                <p>At least 1 content type: campaign marketing touchpoint (Direct Mail or Email) deployed by May 1, and tier underperformance threshold checkbox checked.</p>
+            </div>
+            <div class="window-card">
+                <div class="window-label">Window 2</div>
+                <div class="date">October 1</div>
+                <p>Same conditions evaluated again. Triggers a new Underperformance Period if no open period already exists for the client.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <table class="tier-table">
+                <thead>
+                    <tr>
+                        <th>Tier</th>
+                        <th>Threshold Condition</th>
+                        <th>Additional Condition</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="tier-badge t1">T1 Platinum</span></td>
+                        <td>Outlook not 75% to Goal checkbox = true <em>(new, to be built)</em></td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tier-badge t2t3">T1–T3</span></td>
+                        <td>Outlook to Goal Below 85% checkbox = true</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td><span class="tier-badge t4">T4</span></td>
+                        <td>Outlook to Goal Below 85% checkbox = true</td>
+                        <td>Relationship at Risk checkbox = true</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- WORKFLOW -->
+    <div class="section">
+        <div class="section-label">Workflow</div>
+        <h2>End-to-End Task Flow</h2>
+
+        <div class="flow">
+
+            <div class="flow-step auto">
+                <div class="flow-left">
+                    <div class="step-dot">⚙</div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="step-body">
+                    <span class="tag tag-auto">Automated — Salesforce Flow</span>
+                    <h3>Records Created</h3>
+                    <p>An <strong>Underperformance Period</strong> object and a linked child object, <strong>Intervention Record</strong>, are auto-created in Salesforce under the client's deployment. The Intervention Record surfaces immediately in Client Pulse, ready for the EM to populate.</p>
+                </div>
+            </div>
+
+            <div class="flow-step em">
+                <div class="flow-left">
+                    <div class="step-dot">1</div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="step-body">
+                    <span class="tag tag-task">TaskRay Task — Per Client</span>
+                    <h3>Underperformance Alert</h3>
+                    <div class="task-subject">"[Client Name] — Underperformance Alert"</div>
+                    <div class="cp-steps">
+                        <p><strong>EM action in Client Pulse:</strong></p>
+                        <ol>
+                            <li>Open Client Pulse — flagged clients appear in red</li>
+                            <li>Click into the client</li>
+                            <li>Use the performance widget to review underperformance context, read AI recommendations, forecast impact</li>
+                            <li>Scroll to Intervention History and log an intervention plan</li>
+                            <li>Fields logged in the tool sync automatically to Salesforce</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-step reminder">
+                <div class="flow-left">
+                    <div class="step-dot">2</div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="step-body">
+                    <span class="tag tag-task">TaskRay Task — 14 Days Later</span>
+                    <h3>Approval / In Market Reminder</h3>
+                    <div class="task-subject">"[Client Name] — Check In: Client Approval / In Market Status"</div>
+                    <p>Flexible nudge — EM can extend the due date as needed. Open Client Pulse to update client approval and update in-market status as needed.</p>
+                </div>
+            </div>
+
+            <div class="flow-step reminder">
+                <div class="flow-left">
+                    <div class="step-dot">3</div>
+                    <div class="step-connector"></div>
+                </div>
+                <div class="step-body">
+                    <span class="tag tag-task">TaskRay Task — 60 Days Post In Market</span>
+                    <h3>60-Day Intervention Review</h3>
+                    <div class="task-subject">"[Client Name] — 60-Day Intervention Review"</div>
+                    <p>Updated outcome data (% to goal, lift achieved, revenue impact) is auto-populated by Mode and pushed to Client Pulse. EM reviews and closes the intervention as Resolved or Not Resolved.</p>
+                </div>
+            </div>
+
+            <div class="flow-step outcome">
+                <div class="flow-left">
+                    <div class="step-dot">↓</div>
+                </div>
+                <div class="step-body">
+                    <h3>Resolution</h3>
+                    <div class="branch">
+                        <div class="branch-card branch-resolved">
+                            <h4>✓ Resolved</h4>
+                            <p>Intervention closed as Resolved. Underperformance Period closes in Salesforce. Client re-evaluated at the next detection window.</p>
+                        </div>
+                        <div class="branch-card branch-not-resolved">
+                            <h4>↺ Not Resolved</h4>
+                            <p>New Intervention Record auto-created in Salesforce and surfaced in Client Pulse. New cycle task fires — EM logs next intervention in the tool.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TASK MOCKUP -->
+    <div class="section">
+        <div class="section-label">Task Preview</div>
+        <h2>Initial Alert Task — What the EM Sees</h2>
+        <div class="object-card child" style="max-width: 680px;">
+            <h3>[Client Name] — Underperformance Alert</h3>
+            <div class="object-subtitle">TaskRay Task · fires per client on signal date</div>
+            <ul class="field-list">
+                <li><span class="field-name">Assigned To</span> <span class="field-note">EM on account</span></li>
+                <li><span class="field-name">Due Date</span> <span class="field-note">date of signal fire</span></li>
+                <li><span class="field-name">Related To</span> <span class="field-note">Underperformance Period</span></li>
+                <li><span class="field-name">Status</span> <span class="field-note">Open</span></li>
+                <li>
+                    <span class="field-name">Description</span>
+                    <span class="field-note" style="text-align:left; color:#555; font-weight:400; max-width: 420px;">[Client Name] has been flagged as underperforming. Open the Client Pulse tool and locate [Client Name] — flagged clients appear in red. Click into the client and use the performance widget to review underperformance context, read AI recommendations, and forecast impact. Scroll to the Intervention History section and log an intervention plan. Fields logged in the tool will sync automatically to Salesforce.</span>
+                </li>
+                <li><span class="field-name">Link</span> <span class="field-note"><a href="#" style="color: var(--brand-green); text-decoration: underline; font-weight: 500;">Client Pulse</a></span></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SALESFORCE OBJECTS -->
+    <div class="section">
+        <div class="section-label">Data Model</div>
+        <h2>Salesforce Objects</h2>
+        <div class="objects-grid">
+            <div class="object-card parent">
+                <h3>Underperformance Period</h3>
+                <div class="object-subtitle">Parent record · Salesforce only · not surfaced in Client Pulse</div>
+                <ul class="field-list">
+                    <li><span class="field-name">Trigger Date</span> <span class="field-note">auto-populated</span></li>
+                    <li><span class="field-name">% to Goal at Trigger</span> <span class="field-note">auto-populated</span></li>
+                    <li><span class="field-name">Annual Enrollment Goal</span> <span class="field-note">auto-populated</span></li>
+                    <li><span class="field-name">Campaign Mktg Touchpoints Deployed</span> <span class="field-note">auto-populated</span></li>
+                    <li><span class="field-name">Date of Last Deployed Touchpoint</span> <span class="field-note">auto-populated</span></li>
+                    <li><span class="field-name">Prior Underperformance Periods</span> <span class="field-note">rollup count</span></li>
+                    <li><span class="field-name">Status</span> <span class="field-note">Open / Resolved</span></li>
+                    <li><span class="field-name">Total Interventions</span> <span class="field-note">rollup</span></li>
+                    <li><span class="field-name">Total Revenue Impact</span> <span class="field-note">rollup</span></li>
+                    <li><span class="field-name">Best Lift Achieved</span> <span class="field-note">rollup</span></li>
+                    <li><span class="field-name">Resolution Date</span> <span class="field-note">editable</span></li>
+                    <li><span class="field-name">% to Goal at Resolution</span> <span class="field-note">editable</span></li>
+                </ul>
+            </div>
+            <div class="object-card child">
+                <h3>Intervention Record</h3>
+                <div class="object-subtitle">Child record · surfaces in Client Pulse</div>
+                <ul class="field-list">
+                    <li><span class="field-name">Intervention Type</span> <span class="field-note em">EM via Client Pulse</span></li>
+                    <li><span class="field-name">Status</span> <span class="field-note em">EM via Client Pulse</span></li>
+                    <li><span class="field-name">Date in Market</span> <span class="field-note em">EM via Client Pulse</span></li>
+                    <li><span class="field-name">Notes</span> <span class="field-note em">EM via Client Pulse</span></li>
+                    <li><span class="field-name">Identification Date</span> <span class="field-note">auto-populated</span></li>
+                    <li><span class="field-name">Expected In Market Date</span> <span class="field-note">editable</span></li>
+                    <li><span class="field-name">Confirmed In Market Date</span> <span class="field-note">auto / override</span></li>
+                    <li><span class="field-name">% to Goal at 60 Days</span> <span class="field-note sync">Mode → Client Pulse</span></li>
+                    <li><span class="field-name">Lift Achieved</span> <span class="field-note sync">formula → Client Pulse</span></li>
+                    <li><span class="field-name">Revenue Impact</span> <span class="field-note sync">Mode → Client Pulse</span></li>
+                    <li><span class="field-name">Outcome</span> <span class="field-note">Resolved / Not Resolved</span></li>
+                    <li><span class="field-name">Link to Prior Intervention</span> <span class="field-note">auto-populated</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLIENT PULSE SYNC -->
+    <div class="section">
+        <div class="section-label">Integration</div>
+        <h2>Client Pulse ↔ Salesforce Sync</h2>
+        <div class="sync-grid">
+            <div class="sync-box">
+                <h4>Client Pulse → Salesforce</h4>
+                <div class="sync-sub">EM edits in tool · pushed to Intervention Record on save</div>
+                <ul>
+                    <li>Intervention Type</li>
+                    <li>Status</li>
+                    <li>Date in Market</li>
+                    <li>Notes</li>
+                    <li>Net new Intervention Records</li>
+                </ul>
+            </div>
+            <div class="sync-arrow-col">
+                <div class="arrow-icon">⇄</div>
+                <div class="arrow-label">Bidirectional</div>
+            </div>
+            <div class="sync-box">
+                <h4>Salesforce → Client Pulse</h4>
+                <div class="sync-sub">Auto-populated · read-only in tool</div>
+                <ul>
+                    <li>Trigger Date</li>
+                    <li>% to Goal at 60 Days</li>
+                    <li>Lift Achieved</li>
+                    <li>Revenue Impact</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    <strong>Underperformance Signal Workflow</strong> &nbsp;·&nbsp; Document owner: Emily Brock &nbsp;·&nbsp; Developed April 2026
+</footer>
+
+</body>
+</html>
