@@ -283,15 +283,13 @@
         .branch-resolved h4 { color: var(--dark-green); }
         .branch-not-resolved h4 { color: var(--red); }
         .branch-card p { font-size: 0.83rem; color: #555; }
+        .branch-card p + p { margin-top: 6px; }
 
         .resolution-definition {
             font-size: 0.83rem;
-            color: #555;
-            background: var(--light-cream);
-            border-left: 3px solid var(--medium-green);
-            border-radius: 0 6px 6px 0;
-            padding: 10px 14px;
-            margin-bottom: 12px;
+            color: var(--dark-green);
+            font-style: italic;
+            margin-top: 6px;
         }
 
         /* Objects */
@@ -568,11 +566,11 @@
                 </div>
                 <div class="step-body">
                     <h3>Resolution</h3>
-                    <div class="resolution-definition">Resolution means that the client is now on track to reach 85% of annual target, and the checkbox field is no longer checked.</div>
                     <div class="branch">
                         <div class="branch-card branch-resolved">
                             <h4>✓ Resolved</h4>
                             <p>Intervention closed as Resolved. Underperformance Period closes in Salesforce. Client re-evaluated at the next detection window.</p>
+                            <p class="resolution-definition">Resolution means that the client is now on track to reach 85% of annual target, and the checkbox field is no longer checked.</p>
                         </div>
                         <div class="branch-card branch-not-resolved">
                             <h4>↺ Not Resolved</h4>
