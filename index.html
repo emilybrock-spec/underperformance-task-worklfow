@@ -284,6 +284,16 @@
         .branch-not-resolved h4 { color: var(--red); }
         .branch-card p { font-size: 0.83rem; color: #555; }
 
+        .resolution-definition {
+            font-size: 0.83rem;
+            color: #555;
+            background: var(--light-cream);
+            border-left: 3px solid var(--medium-green);
+            border-radius: 0 6px 6px 0;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+        }
+
         /* Objects */
         .objects-grid {
             display: grid;
@@ -558,6 +568,7 @@
                 </div>
                 <div class="step-body">
                     <h3>Resolution</h3>
+                    <div class="resolution-definition">Resolution means that the client is now on track to reach 85% of annual target, and the checkbox field is no longer checked.</div>
                     <div class="branch">
                         <div class="branch-card branch-resolved">
                             <h4>✓ Resolved</h4>
@@ -607,7 +618,7 @@
                     <li><span class="field-name">Trigger Date</span> <span class="field-note">auto-populated</span></li>
                     <li><span class="field-name">% to Goal at Trigger</span> <span class="field-note">auto-populated</span></li>
                     <li><span class="field-name">Annual Enrollment Goal</span> <span class="field-note">auto-populated</span></li>
-                    <li><span class="field-name">Campaign Mktg Touchpoints Deployed</span> <span name="field-note">auto-populated</span></li>
+                    <li><span class="field-name">Campaign Mktg Touchpoints Deployed</span> <span class="field-note">auto-populated</span></li>
                     <li><span class="field-name">Date of Last Deployed Touchpoint</span> <span class="field-note">auto-populated</span></li>
                     <li><span class="field-name">Prior Underperformance Periods</span> <span class="field-note">rollup count</span></li>
                     <li><span class="field-name">Status</span> <span class="field-note">Open / Resolved</span></li>
