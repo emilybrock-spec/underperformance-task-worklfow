@@ -292,6 +292,13 @@
             margin-top: 6px;
         }
 
+        .not-resolved-definition {
+            font-size: 0.83rem;
+            color: #a02020;
+            font-style: italic;
+            margin-top: 6px;
+        }
+
         /* Objects */
         .objects-grid {
             display: grid;
@@ -575,6 +582,7 @@
                         <div class="branch-card branch-not-resolved">
                             <h4>↺ Not Resolved</h4>
                             <p>New Intervention Record auto-created in Salesforce and surfaced in Client Pulse. New cycle task fires — EM logs next intervention in the tool.</p>
+                            <p class="not-resolved-definition">Triggered if the checkmark remains after 60 days in market.</p>
                         </div>
                     </div>
                 </div>
